@@ -91,3 +91,10 @@ plt.xlim(-0.5, sample_size + 0.5)
 plt.legend()
 ```
 
+
+    <matplotlib.legend.Legend at 0x1f0e57e7f60>
+
+
+
+
+![png](output_18_1.png)
