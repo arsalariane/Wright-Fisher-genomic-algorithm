@@ -1,0 +1,1012 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "This is an ipython notebook. Lectures about Python, useful both for beginners and experts, can be found at http://scipy-lectures.github.io."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "I recommend installing the [Anaconda](https://store.continuum.io/cshop/academicanaconda) distribution. The individual version should be free. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Open the notebook by (1) copying this file into a directory, (2) in that directory typing \n",
+    "jupyter notebook or jupyter lab.\n",
+    "and (3) selecting the notebook.\n",
+    "\n",
+    "\n",
+    "\n",
+    "\n",
+    "In this exercise, we will build a Wright-Fisher simulation model, which will be the basis of most of our simulation efforts. \n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Wright-Fisher model\n",
+    "## Motivation\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Population genetics seeks to describe and understand patterns of genetic diversity found in natural and artificial populations. Blood groups, which are genetically determined, have very uneven geographical distributions:\n",
+    "![Distribution of B blood groups](https://www2.palomar.edu/anthro/vary/images/map_of_B_blood_in_the_world.gif)\n",
+    "\n",
+    "We can ask many questions about these distributions: Are these the result of natural selection? Of dramatic historical events? Or are they simply meaningless random distributions? To understand the data, we need to build models for the data that make predictions and can be falsified.             \n",
+    "\n",
+    "In this exercise, we will build a simple model for the evolution of allele frequencies in a population. We will use this model over and over in this course. To build an evolutionary model, we need to specify a number of parameters: the population size, the structure of the genome (e.g., the number of chromosomes, its ploidy), the mode of reproduction of the population (e.g., sexual vs asexual), whether individuals have mate choice preferences, the distribution in the number and timing of offspring by individual, how mutations arise, how alleles are transmitted from parent to offspring. We also have to decide on the starting point in our model, the ancestral population from which we will consider evolution. This represents a lot of choices. Our first model will try to keep everything as simple as possible:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "* Population size:    constant, $N$\n",
+    "\n",
+    "* Structure of the genome:   one single haploid chromosome of length 1 base pair. \n",
+    "\n",
+    "* Mode of reproduction:      asexual\n",
+    "\n",
+    "* Mutation process:          No mutation\n",
+    "\n",
+    "* Transmission:              Asexual transmission (clonal reproduction)\n",
+    "\n",
+    "* Distribution of offspring: ?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "It was straightforrward to come up with the simplest parameters so far, but here we need to think a bit more. Since we have a haploid population of constant size, the average number of offspring per individual must be one. If every individual has exactly one offspring, the population will never change, and the model will fail to account for the observed variation in reproductive success across individuals.  \n",
+    " \n",
+    "If we let each parent independently spawn a random number of offspring, the population size could change a little bit at every generation. That's not a problem per se, since real populations sizes do fluctuate over time. However, it is often useful to treat the population as a known parameter. This is the case, for example, if we want to predict genomic diversity in a population of known size. \n",
+    "\n",
+    "If parents vary in their number of offspring, how can they synchronize to produce exactly one offspring, on average?\n",
+    "One way would be to add feedback, reducing the mean number of offspring when the population size increases, and increasing it when the population size decreases. That could work, but there are many parameters to fix, and even there we can't control the population size all that well.    \n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "There are a few elegant but slightly strange ways of solving this problem by keeping the population size at an exact, predefined $N$. First, we'll imagine that reproduction is synchronized across all individuals in the population. \n",
+    "Then, we'll suppose that each parent produces very many offspring, but that only $N$ offspring from the entire population are allowed to survive, and these are selected at random among all offspring. You can also turn the table and imagine that each of the allowed $N$ offspring \"picks\" a parent at random. If you don't like the idea of an offspring choosing its parents, you can imagine a higher power selecting a parent at random to generate every offspring. \n",
+    "\n",
+    "These approaches are equivalent, in that they make the same predictions about the number of surviving offsprings per parent. **Take the time to convince yourself that this is the case.**\n",
+    "\n",
+    "This sampling approach defines the Wright-Fisher model. We can add many features to this model, such as selection, recombination, mutation, and so forth, but as long as you have this discrete generations and random selection of parents, you're within the Wright-Fisher model.       \n",
+    "\n",
+    "I'll just mention one alternative, called the Moran Model, which involves replacing a single, randomly selected individual by the genotype of another, randomly selected individual, and repeating this $N$ times per generation. The Moran model is not exactly equivalent to the Wright-Fisher model, and there are cases where it is more convenient. But we'll stick to Wright-Fisher for this notebook.    "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "*Optional Mathematical exercise*\n",
+    "\n",
+    "1. What is the distribution of offspring number per individual in the Wright-Fisher model? \n",
+    "\n",
+    "2. Convince yourself that this distribution is approximately Poisson distributed with mean one (hint: This is a consequence of the law of rare events) "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Libraries\n",
+    "We'll need the following python plotting libraries. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 1\n",
+    "%matplotlib inline \n",
+    "# If you run into errors with %matplotlib, check that your version of ipython is >=1.0 \n",
+    "import numpy as np # Numpy defines useful functions for manipulating arrays and matrices.\n",
+    "import matplotlib.pyplot as plt # Matplotlib is a plotting library"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Implementation\n",
+    "\n",
+    "We have specified almost everything we needed in the model, except for the initial state of the population. We will suppose that the single site has two alleles labeled $0$ and $1$. We need to specify the number of individuals nInd in the initial population and the proportion $p_0$ of $1$ alleles\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 2\n",
+    "p0   = 0.1  # initial proportion of \"1\" alleles \n",
+    "nInd = 100  # initial population size (number of individuals)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "\n",
+    "Now we need to create an initial population with the given number of individuals, and the appropriate proportion of 1 alleles. We'll store the population as a np.array called \"initial_population\", of length nInd containing 0s and 1s."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 3\n",
+    "# Initialize a population of length nInd with only 0 alleles. \n",
+    "initial_population = np.zeros(nInd)\n",
+    "\n",
+    "# Set the first p0*nInd alleles in initial_population to 1. \n",
+    "\n",
+    "......\n",
+    "\n",
+    "# Now all the 1 alleles are at the beginning of the array, with the remainder filled with zero.\n",
+    "# The position of individuals doesn't matter in this model, but if you prefer to have a more realistically random \n",
+    "# distribution of alleles, you can use np.random.shuffle to distribute alleles randomly.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "To take finite samples from this population, we can use the np.random.choice function. When taking a sample from a population, we can pick each sample only once--the \"replace=False\" option below tells us that we don't replace the sampled individual in the population before drawing a new one. Read the np.random.choice documentation for more detail! "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 4\n",
+    "sample_size = 10\n",
+    "np.random.choice(initial_population, sample_size, replace=False )"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "When we take repeated samples from the same population, we can find different numbers of alternate alleles: There are random fluctuations not only in the reproduction, but also in the experimental sampling. We'll first have a look at all these distributions.\n",
+    "\n",
+    "*Optional Mathematical exercise*\n",
+    "    \n",
+    "What is the distribution of the number of alternate alleles in a sample of $s$ individuals from a population of size $nInd$ with  allele frequency p?\n",
+    "\n",
+    "\n",
+    "I generated a bunch of samples below, and compared the resulting histogram to plausible probability distributions so that you can pick the one that fits best. If you don't do the math problems, read the wikipedia entry about the best-fitting one and check that it makes sense. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 5\n",
+    "import scipy\n",
+    "from scipy import stats\n",
+    "\n",
+    "iterations = 10000  # the number of times to draw.\n",
+    "sample_size = 10  # the size of each sample\n",
+    "alt_counts = []  # number of alternate alleles (i.e., 1's) for each draw\n",
+    "\n",
+    "for i in range(iterations):\n",
+    "    sample = np.random.choice(initial_population, sample_size, replace=False)\n",
+    "    # Get the number of alt alleles\n",
+    "    alt_counts.append(sample.sum())\n",
+    "    \n",
+    "# Plot a histogram of sampled values    \n",
+    "plt.hist(alt_counts, sample_size + 1, range=(-0.5, sample_size + 1 - 0.5), label=\"random sample\")\n",
+    "plt.xlabel(\"number of alt alleles\")\n",
+    "plt.ylabel(\"counts\")\n",
+    "\n",
+    "# Compare this to some discrete distributions\n",
+    "x_range = range(sample_size + 1) # All the possible values\n",
+    "\n",
+    "p = np.sum(initial_population) * 1. / len(initial_population)  # Initial fraction of alt's\n",
+    "\n",
+    "# Poisson with mean sample_size * p\n",
+    "y_poisson = stats.poisson.pmf(x_range, sample_size*p) * iterations\n",
+    "# Binomial with probability p and  sample_size draws\n",
+    "y_binom = stats.binom.pmf(x_range, sample_size,p) * iterations\n",
+    "# Hypergeometric draw of sample_size from population of size len(initial_populationpop)\n",
+    "# with np.sum(initial_population) ones.\n",
+    "y_hypergeom = stats.hypergeom.pmf(x_range, len(initial_population), np.sum(initial_population), sample_size)\\\n",
+    "                * iterations\n",
+    "\n",
+    "plt.plot(x_range, y_poisson, label=\"Poisson\", lw=3)\n",
+    "plt.plot(x_range, y_binom, label=\"Binomial\")\n",
+    "plt.plot(x_range, y_hypergeom, label=\"Hypergeometric\")\n",
+    "plt.xlim(-0.5, sample_size + 0.5)\n",
+    "plt.legend()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Now comes the time to code up the Wright-Fisher model. Remember that there were two ways of thinking about Wright-Fisher reproduction: \n",
+    "\n",
+    "    1- We generate a very large number of offspring for each parent, and than we take a sample from this very large number of offspring\n",
+    "    2- Each offspring picks a parent at random. \n",
+    "\n",
+    "In 2-, each parent can be chosen multiple times. This is equivalent to taking a sample from the previous generation, but *with replacement*. Convince yourself that this is true. This is *not* optional! If you are not convinced, try programming it both ways, or ask questions. \n",
+    "\n",
+    "Now code a function that takes in a parental population as an array (such as \"initial_population\", above), and returns an offspring population. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 6\n",
+    "def generation(pop):\n",
+    "    \"\"\"Takes in a list or array describing an asexual parental population. \n",
+    "    Return a list describing a descendant population according to Wright-Fisher dynamics with constant size\n",
+    "    \"\"\"\n",
+    "    # Use np.random.choice to draw an offspring population of len(pop) individuals \n",
+    "    return np.random.choice(...) \n",
+    "                    \n",
+    "generation(initial_population)\n",
+    "        "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Here again, we get a different number of ones every time we run the \"generation\" function. I also generated a bunch of generation samples to get an idea of how much variation there is, and overlaid some plausible distribution. Which one fits best? Does it make sense to you?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 7\n",
+    "\n",
+    "nsample = 10000  # the number of samples to draw.\n",
+    "alt_counts = []  # number of alternate alleles (i.e., 1's) for each draw\n",
+    "\n",
+    "for i in range(nsample):\n",
+    "    offspring = generation(initial_population)\n",
+    "    alt_counts.append(offspring.sum())\n",
+    "\n",
+    "hist = plt.hist(alt_counts, len(initial_population)+1, range=(0-0.5, len(initial_population)+0.5))\n",
+    "plt.xlabel(\"number of alt alleles\")\n",
+    "plt.ylabel(\"counts\")\n",
+    "\n",
+    "# Here I just check that the initial population is still a list of length nInd\n",
+    "assert nInd == len(initial_population),\"initial_population doesn't have the same length as nInd\" \n",
+    "\n",
+    "x_range = range(nInd+1)                  # All the possible values\n",
+    "p=np.sum(initial_population)*1./nInd   # The initial frequency\n",
+    "\n",
+    "# Compare this to some distributions\n",
+    "y_poisson = stats.poisson.pmf(x_range, nInd*p) * nsample\n",
+    "y_binom = stats.binom.pmf(x_range, nInd, p) * nsample\n",
+    "y_hypergeom = stats.hypergeom.pmf(x_range, nInd, np.sum(initial_population), nInd) * nsample\n",
+    "\n",
+    "plt.plot(x_range, y_poisson, label=\"Poisson\",lw=3)\n",
+    "plt.plot(x_range, y_binom, label=\"Binomial\")\n",
+    "plt.plot(x_range, y_hypergeom, label=\"Hypergeometric\")\n",
+    "plt.xlim(-0.5, nInd+0.5)\n",
+    "plt.ylim(0, 1.2*max(hist[0]))\n",
+    "plt.legend()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Now we are ready to evolve our population for 100 generations. Let's store the entire genotypes for each generation in a list."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 8\n",
+    "nGen = 100  # Number of generations to simulate\n",
+    "history = [initial_population]  # A container list for our simulations. It will contain the population \n",
+    "                                # state after generations 0 to nGen\n",
+    "for i in range(nGen):\n",
+    "    # evolve the population for one generation, and append the result to history.\n",
+    "    history.append(...) \n",
+    "history = np.array(history)  # convert the list into an array for convenient manipulation later on"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Now we want to look at the results. Let's compute the allele frequency at each generation and plot that as a function of time."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 9\n",
+    "# Compute the allele frequency at each generation.\n",
+    "# freqs should be a list or array of frequencies, with one frequency per generation.\n",
+    "# history is a np array and has two methods that can help you here: sum, and mean. \n",
+    "# Mean is probably the best bet here. \n",
+    "freqs =...\n",
+    "plt.plot(freqs)\n",
+    "plt.axis([0, 100, 0, 1]);#define the plotting range\n",
+    "plt.xlabel(\"generation\")\n",
+    "plt.ylabel(\"population frequency\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Now we would like to experiment a bit with the tools that we have developed. Before we do this, we will organize them a bit better, using a Python \"class\" and object-oriented programming. We have defined above variables that describe a population (such as the population size nInd, and the ancestral frequency g0). We have also defined functions that apply to a population, such as \"generation\". A class is used to keep track of the relation between objects, variables, and functions. \n",
+    "\n",
+    "If you are not familiar with classes and are having issues, have a look at [this tutorial](http://en.wikibooks.org/wiki/A_Beginner's_Python_Tutorial/Classes#Creating_a_Class). \n",
+    "\n",
+    "\n",
+    "\n",
+    "    "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 10\n",
+    "class population:\n",
+    "    \"\"\"\n",
+    "    Initialization call: \n",
+    "    \n",
+    "    population(nInd,p0)\n",
+    "    requires a number of individuals nInd and an initial frequency p0\n",
+    "    \n",
+    "    Variables:\n",
+    "    nInd: The number of individuals\n",
+    "    p0: the initial allele frequency\n",
+    "    initial_population: an array of nInd alleles\n",
+    "    history: a list of genotypes for each generation \n",
+    "    frequency_trajectory: an allele frequency trajectory; only defined if get_frequency_trajectory is run. \n",
+    "    Methods:\n",
+    "    generation: returns the offspring from the current population, whish is also the last one in self.history\n",
+    "    evolve: evolves the population for a fixed number of generations, stores results to self.history\n",
+    "    get_frequency_trajectory: calculates the allele frequency history for the population\n",
+    "    plot_trajectory: plots the allele frequency history for the population\n",
+    "    \n",
+    "    \"\"\"\n",
+    "    def __init__(self, nInd, p0): \n",
+    "        \"\"\"initialize the population. nInd is the number of individuals. p0 is the initial allele frequency.\n",
+    "        __init__ is a method that, when run, creates a \"population\" class and defines some of its variables. \n",
+    "        Here we define this __init__ method but we don't run it, so there is no \"population\" created yet.  \n",
+    "        In the meantime, we'll refer to the eventual population object as \"self\".\n",
+    "        We'll eventually create a population by stating something like   \n",
+    "        pop = population(nInd,p0)\n",
+    "        This will call the __init__ function and pass a \"population\" object to it in lieu of self. \n",
+    "        \"\"\"\n",
+    "        #Pass nInd & p0 to nInd & p0 in the population object\n",
+    "        self.nInd = nInd\n",
+    "        self.p0 = p0 \n",
+    "        # Initialize the population\n",
+    "        self.initial_population = np.zeros(self.nInd) \n",
+    "        if (p0 != 0 and int(p0*self.nInd) == 0):\n",
+    "            print(\"warning: the initial frequency was smaller than 1/nInd. Initial frequency set to zero. \")\n",
+    "        self.initial_population[0 : int(p0*self.nInd)] = 1\n",
+    "        np.random.shuffle(self.initial_population)\n",
+    "        # History is a container that records the genotype at each generation.\n",
+    "        # We'll update this list as we go along. For now it should just contains the initial population\n",
+    "        self.history = ... \n",
+    "\n",
+    "    def generation(self): \n",
+    "        \"\"\"class methods need \"self\" as an argument in they definition to know that they apply to a \"population\" \n",
+    "        object. If we have a population \"pop\", we can write \n",
+    "        pop.generation(), and python will know how to pass the population as the first argument. \n",
+    "        \n",
+    "        Returns a descendant population according to Wright-Fisher dynamics with constant size, assuming that the\n",
+    "        parental population is the last generation of self.history. \n",
+    "        \"\"\"\n",
+    "        return np.... \n",
+    "\n",
+    "    def evolve(self,nGen): \n",
+    "        \"\"\"\n",
+    "        This is a method with one additional argument, the number of generations nGen. \n",
+    "        To call this method on a population \"pop\", we'd call pop.evolve(nGen). \n",
+    "        This function can be called many times on the same population. \n",
+    "        pop.evolve(2)\n",
+    "        pop.evolve(3)\n",
+    "        would evolve the population for 5 generations. \n",
+    "        For each step, we make a call to the function generation() and append the population to the \"self.history\"\n",
+    "        container. \n",
+    "        \"\"\"\n",
+    "        for _i in range(nGen):\n",
+    "            ...\n",
+    "        \n",
+    "        self.get_frequency_trajectory() # This computes self.frequency_trajectory, the list of population frequencies from the first generation \n",
+    "                       # to the current one. the get_frequency_trajectory function is defined below. \n",
+    "\n",
+    "    def get_frequency_trajectory(self):\n",
+    "        \"\"\"\n",
+    "        returns an array containing the allele frequency history for the population (i.e., the allele frequency at \n",
+    "        generations 0,1,2,..., len(self.history))\n",
+    "        \"\"\"\n",
+    "        history_array = np.array(self.history)\n",
+    "        self.frequency_trajectory = ... \n",
+    "        return self.frequency_trajectory\n",
+    "\n",
+    "    def plot_trajectory(self,ax=\"auto\"):\n",
+    "        \"\"\"\n",
+    "        plots the allele frequency history for the population\n",
+    "        \"\"\"\n",
+    "        \n",
+    "        plt.plot(self.frequency_trajectory)\n",
+    "        if ax==\"auto\":\n",
+    "            plt.axis([0, len(self.history), 0, 1]) \n",
+    "        else:\n",
+    "            plt.axis(ax)\n",
+    "    \n",
+    "\n",
+    "        \n",
+    "\n",
+    "            \n",
+    "        \n",
+    "        "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Exploration\n",
+    "## Drift\n",
+    "We can now define multiple populations, and let them evolve from the same initial conditions."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 11\n",
+    "nInd = 50\n",
+    "nGen = 30\n",
+    "nRuns = 30\n",
+    "p0 = 0.02\n",
+    "# Create a list of length nRuns containing initial populations \n",
+    "# with initial frequency p0 and nInd individuals.\n",
+    "pops = [... for i in range(nRuns)] "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Evolve each population for nGen generations. Because each population object has it's own internal storage for the history of the population, we don't have to worry about recording anything."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 12\n",
+    "for pop in pops:\n",
+    "    ...;  "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Now plot each population trajectory, using the built-in method from the population class. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 13\n",
+    "for pop in pops:\n",
+    "    ...;\n",
+    "plt.xlabel(\"generation\")\n",
+    "plt.ylabel(\"population frequency of 1 allele\") "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Now that we know it works, let's explore this a bit numerically. Try to get at least 1000 runs, it'll make graphs prettier down the road.  "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 14\n",
+    "nInd = ... \n",
+    "nGen = ... \n",
+    "nRuns = ... \n",
+    "p0 =...\n",
+    "pops = [population(nInd, p0) for i in range(nRuns)] \n",
+    "for pop in pops:\n",
+    "...\n",
+    "...\n",
+    "\n",
+    "plt.xlabel(\"generation\")\n",
+    "plt.ylabel(\"population frequency\") \n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "So there is a lot of randomness in there, but if you run it multiple times you should see that there is some regularity in how fast the allele frequencies depart from the initial values.  \n",
+    "To investigate this, we will generate a histogram describing the distribution of allele frequencies at each generation. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 15\n",
+    "def frequencyAtGen(generation_number, populations, nBins=11):\n",
+    "    \"\"\"calculates the allele frequency at generation genN for a list of populations pops. \n",
+    "     Generates a histogram of the observed values\"\"\"\n",
+    "    # First build a list of frequencies observed at generation generation_number in \n",
+    "    # the different populations. WE will then build a histogram from this list\n",
+    "    list_of_frequencies = [... \n",
+    "                                          for pop in populations] \n",
+    "    counts_per_bin, bin_edge_positions = np.histogram(list_of_frequencies, \n",
+    "                                                      bins=nBins, range=(0,1)) \n",
+    "    \n",
+    "    bin_centers=np.array([(bin_edge_positions[i+1]+bin_edge_positions[i]) / 2 for i in range(len(counts_per_bin))]) \n",
+    "    return bin_centers, counts_per_bin # Return the data from which we will generate the plot"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 16\n",
+    "nBins = 11 # The number of frequency bins that we will use to partition the data.\n",
+    "for i in range(nGen+1):\n",
+    "    \n",
+    "    bin_centers, counts_per_bin = frequencyAtGen(...); \n",
+    "    if i==0:\n",
+    "        plt.plot(bin_centers, counts_per_bin, color=plt.cm.autumn(i*1./nGen), label=\"first generation\")  \n",
+    "                                                                        # cm.autumn(i*1./nGen) returns the \n",
+    "                                                                        # color with which to plot the current line\n",
+    "    elif i==nGen:\n",
+    "        plt.plot(bin_centers, counts_per_bin, color=plt.cm.autumn(i*1./nGen), label=\"generation %d\"% (nGen,))\n",
+    "    else:\n",
+    "        plt.plot(bin_centers, counts_per_bin, color=plt.cm.autumn(i*1./nGen))\n",
+    "plt.legend()\n",
+    "plt.xlabel(\"Population frequency\")\n",
+    "plt.ylabel(\"Number of simulated populations \")\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "There are three important observations here:\n",
+    "\n",
+    "    1-Frequencies tend to spread out over time \n",
+    "    2-Over time, there are more and more populations at frequencies 0 and 1. (Why?)\n",
+    "    3-Apart from the 0 and 1 bins, the distribution becomes quite flat."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "A few alternate ways of visualizing the data: first a density map"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 17\n",
+    "nBins = 11\n",
+    "sfs_by_generation = np.array([frequencyAtGen(i, pops, nBins=nBins)[1] for i in range(0, nGen+1)])\n",
+    "bins = frequencyAtGen(i, pops, nBins=nBins)[0]\n",
+    "plt.imshow(sfs_by_generation, aspect=nBins*1./nGen, interpolation='nearest')\n",
+    "plt.xlabel(\"Population frequency (bin number)\")\n",
+    "plt.ylabel(\"Generation\")\n",
+    "plt.colorbar()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Then a 3D histogram, unfortunately a bit slow to compute. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 18\n",
+    "from mpl_toolkits.mplot3d import Axes3D\n",
+    "\n",
+    "fig = plt.figure(figsize=(10,10))\n",
+    "ax = fig.add_subplot(111, projection='3d', elev=90)\n",
+    "xedges = bins\n",
+    "yedges = np.arange(nGen+1)\n",
+    "\n",
+    "xpos, ypos = np.meshgrid(xedges-.4/nBins, yedges-0.5)\n",
+    "\n",
+    "xpos = xpos.flatten()\n",
+    "ypos = ypos.flatten()\n",
+    "zpos = 0 * ypos\n",
+    "dx = .8 / nBins\n",
+    "dy = 1\n",
+    "dz = sfs_by_generation.flatten()\n",
+    "\n",
+    "ax.bar3d(xpos, ypos, zpos, dx, dy, dz, color='b', edgecolor='none', alpha=0.15)\n",
+    "\n",
+    "ax.view_init(elev=30., azim=60)\n",
+    "ax.set_xlabel(\"Population frequency\")\n",
+    "ax.set_ylabel(\"Generation\")\n",
+    "ax.set_zlabel(\"Counts\")\n",
+    "\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Now let's dig into the effect of population size in a bit more detail.\n",
+    "Consider the change in the frequency of alleles between parent and offsprin. \n",
+    "\n",
+    "*Mathematical exercise (NOT optional)*:\n",
+    "\n",
+    "* What is the distribution of the number of individuals carrying the derived allele after one generation, if the derived allele is at frequency $p$ in a parental population of size $N$? \n",
+    "(Hint: we explored this numerically above!)\n",
+    "* What is the variance of this distribution? (Look it up if you don't know--wikipedia is useful for that kind of stuff). \n",
+    "* What is the variance in the distribution in the derived allele *frequency* (rather than the allele counts)?\n",
+    "\n",
+    "    \n",
+    "        "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "\n",
+    "To study the effect of population size on the rate of change in allele frequencies, plot the distribution of allele frequencies after nGen generation. Start with nGen=1 generation. \n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 19\n",
+    "histograms = []\n",
+    "variances = []\n",
+    "p0 = 0.2\n",
+    "sizes = [5, 10, 20, 50, 100, 500] \n",
+    "nGen = 1\n",
+    "for nInd in sizes:\n",
+    "    pops = [population(nInd, p0) for i in range(1000)] \n",
+    "    [pop.evolve(nGen) for pop in pops]\n",
+    "    sample = [pop.get_frequency_trajectory()[-1] for pop in pops]\n",
+    "    variances.append(np.var(sample))\n",
+    "    histograms.append(plt.hist(sample, alpha=0.5, label=\"size %d\" % (nInd,) ))\n",
+    "plt.xlabel(\"Population frequency\")\n",
+    "plt.ylabel(\"Number of populations\")\n",
+    "plt.legend()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "So how does population size affect the change in allele frequency after one generation? Can you give a specific function describing the relationship between variance and population size? \n",
+    "\n",
+    "You can get this relationship from the math exercise above, or just try to guess it from the data. If you want to try to guess, start by plotting the variances (stored in \"variances\") against the population sizes (stored in \"sizes\"). Then you can either try to plot different functinoal forms to see if they fit, or you can change the way you plot the data such that it looks like a straight line. If you do the latter, make sure you update the labels!\n",
+    "\n",
+    "Here I'm giving you a bit more room to explore--there are multiple ways to get there.  "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 20\n",
+    "plt.plot(np.array(sizes), variances, 'o', label=\"simulation\") #this is a starting point, but you can change this!\n",
+    "# Your theory.\n",
+    "...... \n",
+    "\n",
+    "plt.xlabel(\"Population size\") \n",
+    "plt.ylabel(\"Variance\")  "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "For short times, the expected changes in allele frequencies, $Var\\left[E[(x-x_0)^2)\\right]$, are larger for smaller population, a crucial result of population genetics. \n",
+    "\n",
+    "The next question is: How does the rate of change in allele frequency depend on the initial allele frequency? We can plot the histograms of allele frequency as before:\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 21\n",
+    "histograms = []\n",
+    "variances = []\n",
+    "p0_list = np.array([0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, .6, .7, .8, 0.9, 0.95, 1]) \n",
+    "nGen = 1 \n",
+    "for p0 in p0_list:\n",
+    "    pops = [population(nInd, p0) for i in range(1000)] \n",
+    "    [pop.evolve(nGen) for pop in pops]\n",
+    "    sample = [pop.get_frequency_trajectory()[-1] for pop in pops]\n",
+    "    variances.append(np.var(sample))\n",
+    "    histograms.append(plt.hist(sample, 100, alpha=0.5, range=(0,1)))\n",
+    "plt.xlabel(\"Population frequency\")\n",
+    "plt.ylabel(\"Number of populations\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Find the relationship between initial frequency and variance. You can deduce it from the math exercise above, look it up on wikipedia, but you can also just try to guess it from the simulations. \n",
+    "\n",
+    "Tips for guessing: \n",
+    "\n",
+    "First, make the plot of variance vs frequency below\n",
+    "\n",
+    "Then consider how much variance there is for p0=0 and p0=1.  \n",
+    "\n",
+    "Can you come up with a simple function that has these values? Hint: it's a very simple function!\n",
+    "\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 22\n",
+    "plt.plot(np.array(p0_list), variances, 'o', label=\"simulations\")\n",
+    "plt.plot(np.array(p0_list), ..., '-', label=\"theory\")  # Your theory.  \n",
+    "plt.ylabel(\"Variance\")\n",
+    "plt.xlabel(r\"initial frequency p_0\")\n",
+    "plt.legend()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Can you explain why this function is symmetrical around $p_0=0.5$?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Mutation\n",
+    "New mutations enter the population in a single individual, and therefore begin their journey at frequency $\\frac{1}{N}$. Next, we'll numerically estimate the probability that such a new mutation will eventually fix (i.e., the probability that the mutation reaches frequency 1) in the population, if no subsequent mutations occur. \n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 23\n",
+    "\n",
+    "nInd = 10\n",
+    "nGen = 100\n",
+    "nRuns = 2000\n",
+    "# Enter the initial allele frequency for new mutations\n",
+    "p0 = ...\n",
+    "pops = [... for i in range(nRuns)] \n",
+    "[pop.evolve(nGen) for pop in pops]; "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "We can plot the number of populations at each frequency, as we did above."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 24\n",
+    "nBins = nInd + 1  # We want to have bins for 0,1,2,..., N copies of the allele. \n",
+    "proportion_fixed = []  # fixation rate\n",
+    "for i in range(nGen+1):\n",
+    "    x,y = frequencyAtGen(...);     \n",
+    "    if i==0:\n",
+    "        plt.plot(x, y, color=plt.cm.autumn(i*1./nGen), label=\"first generation\")  # cm.autumn(i*1./nGen) returns the \n",
+    "                                                                            #color with which to plot the current line\n",
+    "    elif i==nGen:\n",
+    "        plt.plot(x, y, color=plt.cm.autumn(i*1./nGen), label=\"generation %d\"% (nGen,) )\n",
+    "    else:\n",
+    "        plt.plot(x, y, color=plt.cm.autumn(i*1./nGen))\n",
+    "    \n",
+    "    # We'll consider a population \"fixed\" if it is in the highest-frequency bin. It's\n",
+    "    # an approximation, but not a bad one if the number of bins is comparable to the \n",
+    "    # population size.\n",
+    "    proportion_fixed.append((i, y[-1]*1./nRuns))\n",
+    "    \n",
+    "plt.legend()    \n",
+    "plt.xlabel(\"Population frequency\")\n",
+    "plt.ylabel(\"Number of simulations\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Here you should find that most mutations fix at zero frequency--only a small proportion survives. \n",
+    "\n",
+    "*What is the probability that a new mutation fixes in the population?*--I'd like you to solve this problem both mathematically and numerically.  \n",
+    "\n",
+    "The mathematical part requires almost no calculation or mathematical knowledge, once you think about it in the right way. You can include your mathematical solution in the box below. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "For the computational part, note that we already computed the proportion of fixed alleles vs time in the \"proportion_fixed\" variable. So if we simulate long enough, we'll find the proportion of mutations that eventually fix.  \n",
+    "Make sure that the numerical value agrees with the mathematical expectation!"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "### 25\n",
+    "proportion_fixed = np.array(proportion_fixed)\n",
+    "plt.plot(proportion_fixed[:,0], proportion_fixed[:,1])\n",
+    "plt.xlabel(\"Generation\")\n",
+    "plt.ylabel(\"Fixation probability\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Summary\n",
+    "\n",
+    "Some important things that we've seen in this notebook:\n",
+    "* The Wright-Fisher model. Despite its simplicity, it is the basic building block of a large fraction of population genetics.\n",
+    "* In finite populations, sampling fluctuations are an important driver of allele frequency change.\n",
+    "* These sampling fluctuations cause larger frequency changes in smaller populations.\n",
+    "* These fluctuations mean that alleles eventually fix one way or another -- We need new mutations to maintain diversity within a population.\n",
+    "* For neutral alleles, the probability of new mutations fixing in the population is inversely proportional to the population size\n",
+    "\n",
+    "# Something to think about. \n",
+    "\n",
+    "We'll get to selection, recombination, and linkage in the next exercises. In the meantime, you can think about the following:\n",
+    " \n",
+    "* How much time will it take for a typical new mutation to reach fixation for different population sizes? \n",
+    "* If you add a constant influx of new mutations, how will the distribution of allele frequency look like at any given point in time?\n",
+    "\n",
+    "\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Copyright: Simon Gravel. Do not share of distribute this file without the written consent of the author. "
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.4"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}
+
+
