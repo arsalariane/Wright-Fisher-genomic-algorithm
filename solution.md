@@ -25,7 +25,9 @@ initial_population = np.zeros(nInd)
 
 # Set the first p0*nInd alleles to 1. 
 
-![#1589F0](https://via.placeholder.com/15/1589F0/1589F0.png initial_population[0:int(p0*nInd)] = 1
+```diff
++ initial_population[0:int(p0*nInd)] = 1
+```
 
 #The position of individuals doesn't matter in this model, but if you prefer to have a more realistically random 
 # distribution of alleles, you can use np.random.shuffle to distribute alleles randomly.
