@@ -25,7 +25,7 @@ initial_population = np.zeros(nInd)
 
 # Set the first p0*nInd alleles to 1. 
 
-&#x1F34E;
+#x1F34E;
 
 initial_population[0:int(p0*nInd)] = 1 
 
