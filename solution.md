@@ -41,6 +41,53 @@ np.random.choice(initial_population, sample_size, replace=False )
 
 *Optional Mathematical exercise*
 
-1. What is the distribution of offspring number per individual in the Wright-Fisher model? \n",
-\n",
-2. Convince yourself that this distribution is approximately Poisson distributed with mean one (hint: This is a consequence of the law of rare events) "
+1. What is the distribution of offspring number per individual in the Wright-Fisher model? 
+Answer :   #alternate-alleles, (x) = h(x; nInd, s, p*nInd)
+    
+    It is a hypergeometric probability distribution. The probability that an s trail hypergeometric experiment results in exactly x alternate alleles, when the population size is nInd, (p*nInd) of which are classified as alternate alleles. The s trails are dependent as they are done without replacement.
+    
+    h(x; nInd, s, p*nInd) = [ C(p*nInd, x) * C(nInd(1-p), s-x) ] / [ C(nInd, s) ]
+
+2. Convince yourself that this distribution is approximately Poisson distributed with mean one (hint: This is a consequence of the law of rare events)
+
+
+```python
+### 5
+import scipy
+from scipy import stats
+
+iterations = 10000  # the number of times to draw.
+sample_size = 50  # the size of each sample
+alt_counts = []  # number of alternate alleles (i.e., 1's) for each draw
+
+for i in range(iterations):
+    sample=np.random.choice(initial_population, sample_size, replace=False)
+    # get the number of alt alleles
+    alt_counts.append(sample.sum())
+    
+# plot a histogram of sampled values    
+plt.hist(alt_counts, sample_size + 1, range=(-0.5, sample_size + 1 - 0.5), label="random sample")
+plt.xlabel("number of alt alleles")
+plt.ylabel("counts")
+
+# Compare this to some discrete distributions
+x_range = range(sample_size + 1) # all the possible values
+
+p = np.sum(initial_population) * 1. / len(initial_population)  # initial fraction of alt's
+
+# poisson with mean sample_size * p
+y_poisson = stats.poisson.pmf(x_range, sample_size*p) * iterations
+# binomial with probability p and  sample_size draws
+y_binom = stats.binom.pmf(x_range, sample_size,p) * iterations
+# hypergeometric draw of sample_size from population of size len(initial_populationpop)
+# with np.sum(initial_population) ones.
+y_hypergeom = stats.hypergeom.pmf(x_range, len(initial_population), np.sum(initial_population), sample_size)\
+                * iterations
+
+plt.plot(x_range, y_poisson, label="Poisson", lw=3)
+plt.plot(x_range, y_binom, label="Binomial")
+plt.plot(x_range, y_hypergeom, label="Hypergeometric")
+plt.xlim(-0.5, sample_size + 0.5)
+plt.legend()
+```
+
