@@ -25,7 +25,7 @@ initial_population = np.zeros(nInd)
 
 # Set the first p0*nInd alleles to 1. 
 
-[![](https://img.shields.io/badge/Lib.rs-lightgrey?style=for-the-badge)](https://lib.rs/crates/redant)
+> __Note__
 initial_population[0:int(p0*nInd)] = 1 
 
 #The position of individuals doesn't matter in this model, but if you prefer to have a more realistically random 
