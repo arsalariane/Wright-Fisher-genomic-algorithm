@@ -25,7 +25,10 @@ initial_population = np.zeros(nInd)
 
 # Set the first p0*nInd alleles to 1. 
 
-#x1F34E;
+```diff
++ this text is highlighted in green
+- this text is highlighted in red
+```
 
 initial_population[0:int(p0*nInd)] = 1 
 
