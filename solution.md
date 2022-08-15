@@ -42,11 +42,11 @@ np.random.choice(initial_population, sample_size, replace=False )
 *Optional Mathematical exercise*
 ```
 What is the distribution of the number of alternate alleles in a sample of s  individuals from a population of size nInd with allele frequency p?
-Answer :  
+@@ Answer :  
 If we are sampling s individuals from a population we cannot choose the same person twice. Also the population size is fixed and it has a fixed number of individual with alternate allele. This is equivalent to “probability of k successes in s draws without replacement from a finite population of size nInd that contains p*nInd objects with that feature”. So this is a hypergeometric probability distribution.
 The probability that an s trail hypergeometric experiment results in exactly x alternate alleles, when the population size is nInd, (p*nInd) of which are classified as alternate alleles is:
     
-    h(x; nInd, s, p*nInd) = [ C(p*nInd, x) * C(nInd(1-p), s-x) ] / [ C(nInd, s) ]
+    h(x; nInd, s, p*nInd) = [ C(p*nInd, x) * C(nInd(1-p), s-x) ] / [ C(nInd, s) ] @@
 
 2. Convince yourself that this distribution is approximately Poisson distributed with mean one (hint: This is a consequence of the law of rare events)
 ```
@@ -92,7 +92,8 @@ plt.legend()
 ```
 
 If we sample 10 individuals from the initial population repeatedly :
-![png](image1.png)
+#![png](image1.png)
+![Semantic description of image](/arsalariane/Wright-Fisher-genomic-algorithm/image1.PNG "Image Title")
 
 If we sample 50 individuals from the initial population repeatedly :
 ![png](image1bis.png)
