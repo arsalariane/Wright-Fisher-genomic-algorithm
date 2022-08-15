@@ -92,8 +92,7 @@ plt.legend()
 ```
 
 If we sample 10 individuals from the initial population repeatedly :
-#![png](image1.png)
-![Semantic description of image](/arsalariane/Wright-Fisher-genomic-algorithm/image1.PNG "Image Title")
+#![png](image1.PNG)
 
 If we sample 50 individuals from the initial population repeatedly :
 ![png](image1bis.png)
