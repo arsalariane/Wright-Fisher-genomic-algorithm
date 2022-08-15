@@ -25,11 +25,6 @@ initial_population = np.zeros(nInd)
 
 # Set the first p0*nInd alleles to 1. 
 
-```diff
-+ this text is highlighted in green
-- this text is highlighted in red
-```
-
 initial_population[0:int(p0*nInd)] = 1 
 
 #The position of individuals doesn't matter in this model, but if you prefer to have a more realistically random 
@@ -45,16 +40,16 @@ np.random.choice(initial_population, sample_size, replace=False )
 ```
 
 *Optional Mathematical exercise*
-
-1. What is the distribution of offspring number per individual in the Wright-Fisher model? 
-Answer :   #alternate-alleles, (x) = h(x; nInd, s, p*nInd)
-    
-    It is a hypergeometric probability distribution. The probability that an s trail hypergeometric experiment results in exactly x alternate alleles, when the population size is nInd, (p*nInd) of which are classified as alternate alleles. The s trails are dependent as they are done without replacement.
+```
+What is the distribution of the number of alternate alleles in a sample of s  individuals from a population of size nInd with allele frequency p?
+Answer :  
+If we are sampling s individuals from a population we cannot choose the same person twice. Also the population size is fixed and it has a fixed number of individual with alternate allele. This is equivalent to “probability of k successes in s draws without replacement from a finite population of size nInd that contains p*nInd objects with that feature”. So this is a hypergeometric probability distribution.
+The probability that an s trail hypergeometric experiment results in exactly x alternate alleles, when the population size is nInd, (p*nInd) of which are classified as alternate alleles is:
     
     h(x; nInd, s, p*nInd) = [ C(p*nInd, x) * C(nInd(1-p), s-x) ] / [ C(nInd, s) ]
 
 2. Convince yourself that this distribution is approximately Poisson distributed with mean one (hint: This is a consequence of the law of rare events)
-
+```
 
 ```python
 ### 5
@@ -62,7 +57,7 @@ import scipy
 from scipy import stats
 
 iterations = 10000  # the number of times to draw.
-sample_size = 50  # the size of each sample
+sample_size = 10 # the size of each sample
 alt_counts = []  # number of alternate alleles (i.e., 1's) for each draw
 
 for i in range(iterations):
@@ -96,16 +91,20 @@ plt.xlim(-0.5, sample_size + 0.5)
 plt.legend()
 ```
 
-![png](output_22_1.png)
+If we sample 10 individuals from the initial population repeatedly :
+![png](image1.png)
+
+If we sample 50 individuals from the initial population repeatedly :
+![png](image1bis.png)
+
+It is clear from the simulation as shown above that the number of alternate alleles if we sample 50 individuals from the initial population repeatedly the number of individuals with alternate allele follows hypergeometric distribution.
 
 ```python
 ### 6
 def generation(pop):
-    """Takes in a list or array describing an asexual parental population. 
-    Return a descendant population according to Wright-Fisher dynamics with constant size"""
-    nInd = len(pop) #number of individuals. We could use the global definition of nInd, 
-    #but it's better to use the information that is passed to the function 
-    #now generate the offspring population.
+    #number of individuals 
+    nInd = len(pop)
+    #generate the descendant population
     return np.random.choice(pop, nInd, replace=True) 
                     
 generation(initial_population)
@@ -149,7 +148,11 @@ plt.ylim(0, 1.2*max(hist[0]))
 plt.legend()
 ```
 
-![png](output_22_1.png)
+![png](image2.png)
+
+Here we see the distribution of number of alternate alleles in offsprings if they are allowed to choose a random parent. Since one parent can have multiple offsprings this is a sampling with replacement. So this is equivalent to independent 10000 Bernoulli trials. So this is a binomial distribution.
+
+Now we are ready to evolve our population for 100 generations. Let's store the entire genotypes for each generation in a list.
 
 ```python
 ### 8
@@ -158,16 +161,15 @@ history = [initial_population]  # a container list for our simulations. It will 
                                         # state after generations 0 to nGen
 for i in range(nGen):
     # evolve the population for one generation, and append the result to history.
-    history.append(generation(history[-1])) 
+    history.append(generation(history[i])) 
 history = np.array(history)  # convert the list into an array for convenient manipulation later on
 ```
+Now we want to look at the results. Let's compute the allele frequency at each generation and plot that as a function of time.
 
 ```python
 ### 9
 #compute the allele frequency at each generation.
-#freqs should be a list or array of frequencies, with one frequency per generation.
-#history is a np array and has two methods that can help you here: sum, and mean. 
-#Mean is probably the best bet here. 
+
 freqs = np.mean(history, axis=1)
 plt.plot(freqs)
 plt.axis([0, 100, 0, 1]);#define the plotting range
@@ -175,7 +177,12 @@ plt.xlabel("generation")
 plt.ylabel("population frequency")
 ```
 
-![png](output_26_1.png)
+![png](image3.png)
+
+As we can see above the allele has gone extinct after 32-33 generations in the particular simulation.
+
+Now we would like to experiment a bit with the tools that we have developed. Before we do this, we will organize them a bit better, using a Python "class" and object-oriented programming. We have defined above variables that describe a population (such as the population size nInd, and the ancestral frequency g0). We have also defined functions that apply to a population, such as "generation". A class is used to keep track of the relation between objects, variables, and functions.
+
 
 ```python
 ### 10
@@ -191,12 +198,12 @@ class population:
     p0: the initial allele frequency
     initial_population: an array of nInd alleles
     history: a list of genotypes for each generation 
-    traj: an allele frequency trajectory; only defined if getTraj is run. 
+    frequency_trajectory: an allele frequency trajectory; only defined if get_frequency_trajectory is run. 
     Methods:
     generation: returns the offspring from the current population, whish is also the last one in self.history
     evolve: evolves the population for a fixed number of generations, stores results to self.history
-    getTraj: calculates the allele frequency history for the population
-    plotTraj: plots the allele frequency history for the population
+    get_frequency_trajectory: calculates the allele frequency history for the population
+    plot_trajectory: plots the allele frequency history for the population
     
     """
     def __init__(self, nInd, p0): 
@@ -208,23 +215,26 @@ class population:
         pop = population(nInd,p0)
         This will call the __init__ function and pass a "population" object to it in lieu of self. 
         """
+        #Pass nInd & p0 to nInd & p0 in the population object
         self.nInd = nInd
         self.p0 = p0 
-        #initialize the population
+        # Initialize the population
         self.initial_population = np.zeros(self.nInd) 
+        if (p0 != 0 and int(p0*self.nInd) == 0):
+            print("warning: the initial frequency was smaller than 1/nInd. Initial frequency set to zero. ")
         self.initial_population[0 : int(p0*self.nInd)] = 1
         np.random.shuffle(self.initial_population)
-        #history is a container that records the genotype at each generation.
-        #we'll update this list 
+        # History is a container that records the genotype at each generation.
+        # We'll update this list as we go along. For now it should just contains the initial population
         self.history = [self.initial_population]
 
     def generation(self): 
-        """class methods need "self" as an argument in they definition to know that they apply to a "population" object. 
-        The class structure
-        gives you a more readable way of calling this function: If we have a population "pop", we can write pop.generation(), and python will know how to pass
-        the population as the first argument. Putting the object name upfront often makes code *much* more readable.   
-        Takes the last element of the history. 
-        Return a descendant population according to Wright-Fisher dynamics with constant size
+        """class methods need "self" as an argument in they definition to know that they apply to a "population" 
+        object. If we have a population "pop", we can write 
+        pop.generation(), and python will know how to pass the population as the first argument. 
+        
+        Returns a descendant population according to Wright-Fisher dynamics with constant size, assuming that the
+        parental population is the last generation of self.history. 
         """
         return np.random.choice(np.array(self.history[-1]), self.nInd, replace=True) 
 
@@ -236,26 +246,29 @@ class population:
         pop.evolve(2)
         pop.evolve(3)
         would evolve the population for 5 generations. 
-        For each step, we make a call to the function generation() and append the population to the "self.history" container. 
+        For each step, we make a call to the function generation() and append the population to the "self.history"
+        container. 
         """
-        for i in range(nGen):
+        for _i in range(nGen):
             self.history.append(self.generation())
-        self.getTraj()
+        self.get_frequency_trajectory() # This computes self.frequency_trajectory, the list of population frequencies from the first generation 
+                       # to the current one. the get_frequency_trajectory function is defined below. 
 
-    def getTraj(self):
+    def get_frequency_trajectory(self):
         """
-        calculates the allele frequency history for the population
+        returns an array containing the allele frequency history for the population (i.e., the allele frequency at 
+        generations 0,1,2,..., len(self.history))
         """
-        history_array = np.array(self.history)
-        self.traj = history_array.mean(axis=1)  
-        return self.traj
+        history_array = np.array(self.history) 
+        self.frequency_trajectory = np.mean(history_array, axis=1)   
+        return self.frequency_trajectory
 
-    def plotTraj(self,ax="auto"):
+    def plot_trajectory(self,ax="auto"):
         """
         plots the allele frequency history for the population
         """
         
-        plt.plot(self.traj)
+        plt.plot(self.frequency_trajectory)
         if ax=="auto":
             plt.axis([0, len(self.history), 0, 1]) 
         else:
@@ -276,10 +289,10 @@ We can now define multiple populations, and let them evolve from the same initia
 
 ```python
 ### 11
-nInd = 100
+nInd = 50
 nGen = 30
-nRuns = 10
-p0 = 0.3
+nRuns = 30
+p0 = 0.02
 # Create a list of length nRuns containing initial populations 
 # with initial frequency p0 and nInd individuals.
 pops = [population(nInd, p0) for i in range(nRuns)] 
@@ -300,23 +313,16 @@ Now plot each population trajectory, using the built-in method from the populati
 ```python
 ### 13
 for pop in pops:
-    pop.plotTraj();
+    pop.plot_trajectory();
 plt.xlabel("generation")
 plt.ylabel("population frequency of 1 allele") 
 ```
 
+![png](image.png)
 
+We can see the drift in 10 independent populations over 30 generations starting with allele frequency 0.02 (which corresponds to p0)
 
-
-    Text(0,0.5,'population frequency of 1 allele')
-
-
-
-
-![png](output_34_1.png)
-
-
-Now that we know it works, let's explore this a bit numerically. Try to get at least 1000 runs, it'll make graphs prettier down the road.  
+Now that we know it works, let's explore this a bit numerically. Try to get at least 1000 runs, it'll make graphs prettier down the road.
 
 
 ```python
@@ -324,7 +330,7 @@ Now that we know it works, let's explore this a bit numerically. Try to get at l
 nInd = 100
 nGen = 30 
 nRuns = 2000 
-p0 = 0.3
+p0 = 0.02
 pops = [population(nInd, p0) for i in range(nRuns)] 
 for pop in pops:
     pop.evolve(nGen);
@@ -335,37 +341,40 @@ plt.ylabel("population frequency")
 
 ```
 
+![png](image5.png)
 
-
-
-    Text(0,0.5,'population frequency')
-
-
-
-
-![png](output_36_1.png)
+So there is a lot of randomness in there, but if you run it multiple times you should see that there is some regularity in how fast the allele frequencies depart from the initial values.
+To investigate this, we will generate a histogram describing the distribution of allele frequencies at each generation.
 
 ```python
 ### 15
 def frequencyAtGen(generation_number, populations, nBins=11):
     """calculates the allele frequency at generation genN for a list of populations pops. 
      Generates a histogram of the observed values"""
-    counts_per_bin, bin_edge_positions = np.histogram([pop.traj[generation_number] for pop in populations], bins=nBins, range=(0,1)) 
+    # First build a list of frequencies observed at generation generation_number in 
+    # the different populations. WE will then build a histogram from this list
+    list_of_frequencies = [pop.frequency_trajectory[generation_number]
+                                          for pop in populations] 
+    counts_per_bin, bin_edge_positions = np.histogram(list_of_frequencies, 
+                                                      bins=nBins, range=(0,1)) 
     
     bin_centers=np.array([(bin_edge_positions[i+1]+bin_edge_positions[i]) / 2 for i in range(len(counts_per_bin))]) 
     return bin_centers, counts_per_bin # Return the data from which we will generate the plot
+    
 ```
 
 
 ```python
 ### 16
+
 nBins = 11 # The number of frequency bins that we will use to partition the data.
 for i in range(nGen+1):
     
     bin_centers, counts_per_bin = frequencyAtGen(i, pops, nBins); 
     if i==0:
-        plt.plot(bin_centers, counts_per_bin, color=plt.cm.autumn(i*1./nGen), label="first generation")  # cm.autumn(i*1./nGen) returns the 
-                                                                        #  color with which to plot the current line
+        plt.plot(bin_centers, counts_per_bin, color=plt.cm.autumn(i*1./nGen), label="first generation")  
+                                                                        # cm.autumn(i*1./nGen) returns the 
+                                                                        # color with which to plot the current line
     elif i==nGen:
         plt.plot(bin_centers, counts_per_bin, color=plt.cm.autumn(i*1./nGen), label="generation %d"% (nGen,))
     else:
@@ -373,24 +382,19 @@ for i in range(nGen+1):
 plt.legend()
 plt.xlabel("Population frequency")
 plt.ylabel("Number of simulated populations ")
-
 ```
 
 
-
-
-    Text(0,0.5,'Number of simulated populations ')
-
-
-
-
-![png](output_39_1.png)
+![png](image6.png)
 
 
 There are three important observations here:
 
     1-Frequencies tend to spread out over time 
-    2-Over time, there are more and more populations at frequencies 0 and 1. (Why?) Since, initial allele frequency is 0.3 (low value), it is very likey for future generations to have no alternate alleles, therefore more and more populations have frequency of 0. And it is also slightly likely to have populations at 1 given initial frequency isn't very low either. In fact, you can expect a symmetric curve if you have initial frequency to be 0.5
+    2-Over time, there are more and more populations at frequencies 0 and 1. (Why?) 
+@@ Answer : 
+We can observe a saturation taking place at 0 and 1 : some population reach extinction of the allele and it stays at 0 and, but if fixation is achieved it stays at 1. Even after further generations those populations remain in the same category. But other populations which were in between can reach these saturation in subsequent generations. @@
+
     3-Apart from the 0 and 1 bins, the distribution becomes entirely flat.
 
 A few alternate ways of visualizing the data: first a density map
@@ -398,6 +402,7 @@ A few alternate ways of visualizing the data: first a density map
 
 ```python
 ### 17
+
 nBins = 11
 sfs_by_generation = np.array([frequencyAtGen(i, pops, nBins=nBins)[1] for i in range(0, nGen+1)])
 bins = frequencyAtGen(i, pops, nBins=nBins)[0]
@@ -406,17 +411,13 @@ plt.xlabel("Population frequency (bin number)")
 plt.ylabel("Generation")
 plt.colorbar()
 ```
+for p = 0.02
+![png](image7.png)
 
+for p = 0.3
+![png](image7bis.png)
 
-
-
-    <matplotlib.colorbar.Colorbar at 0x1f0ebc60ba8>
-
-
-
-
-![png](output_42_1.png)
-
+As we can see all 2000 populations were in 3rd bin initially and spreads out in subsequent generations.
 
 Then a 3D histogram, unfortunately a bit slow to compute. 
 
@@ -450,30 +451,29 @@ plt.show()
 ```
 
 
-![png](output_44_0.png)
+![png](image8bis.png)
 
 
-Now let's dig into the effect of population size in a bit more detail.
-Consider the change in frequency after just one generation: 
+Now let's dig into the effect of population size in a bit more detail. Consider the change in the frequency of alleles between parent and offspring.
 
 *Mathematical exercise (NOT optional)*:
 
-* What is the expected distribution of allele frequencies after one generation, if they start at frequency $p$ in a population of size $N$? 
+1. What is the expected distribution of allele frequencies after one generation, if they start at frequency $p$ in a population of size $N$? 
     
-    Ans :The expected distribution of allele frequencies after one generation would be that of a binomial distribution. It is mathematically defined as follows:
+Answer :The expected distribution of allele frequencies after one generation is binomial. It is mathematically defined as follows:
     
     Frequency of alternate alleles after one generation, j = Binomial( $N$, $p$) = C(N,j) * p^j (1-p)^(N-j)
     
-(Hint: we explored this numerically above!)
-* What is the variance of this distribution? (Look it up if you don't know--wikipedia is useful for that kind of stuff)
+
+2. What is the variance of this distribution? (Look it up if you don't know--wikipedia is useful for that kind of stuff)
     
-    Variance = Np(1-p)
+Answer :  Variance = Np(1-p)
 
-        
+3. What is the variance in the distribution in the derived allele frequency (rather than the allele counts)?
 
+Answer :  Variance = p(1-p)/N
 
-To study the effect of population size on the rate of change in allele frequencies, plot the distribution of allele frequencies after nGen generation. Start with nGen=1 generation. 
-
+To study the effect of population size on the rate of change in allele frequencies, plot the distribution of allele frequencies after nGen generation. Start with nGen=1 generation.
 
 
 
@@ -485,9 +485,9 @@ p0 = 0.2
 sizes = [5, 10, 20, 50, 100, 500] 
 nGen = 1
 for nInd in sizes:
-    pops=[population(nInd,p0) for i in range(1000)] 
+    pops = [population(nInd, p0) for i in range(1000)] 
     [pop.evolve(nGen) for pop in pops]
-    sample = [pop.getTraj()[-1] for pop in pops]
+    sample = [pop.get_frequency_trajectory()[-1] for pop in pops]
     variances.append(np.var(sample))
     histograms.append(plt.hist(sample, alpha=0.5, label="size %d" % (nInd,) ))
 plt.xlabel("Population frequency")
@@ -495,23 +495,15 @@ plt.ylabel("Number of populations")
 plt.legend()
 ```
 
+![png](image9.png)
 
 
+So how does population size affect the change in allele frequency after one generation? Can you give a specific function describing the relationship between variance and population size?
 
-    <matplotlib.legend.Legend at 0x1f0e59c0940>
-
-
-
-
-![png](output_47_1.png)
-
-
-So how does population size affect the change in allele frequency after one generation? Can you give a specific function describing the relationship between variance and population size? 
-
-Ans : The variance in allele frequency is clearly decreasing with increase in population size. 
+Answer : The variance in allele frequency is decreasing with increase in population size.
+When population size decreases the distribution spreads out i.e variance increases. This is in accordance with the theory we developed above.
     
-    Variance = 1/(2N)
-        where, N - population size
+    Variance = 1/N
         
     This function is more and more accurate for large values of N.
 
@@ -519,12 +511,11 @@ You can get this relationship from the math exercise above, or just try to guess
 
 Here I'm giving you a bit more room to explore--there are multiple ways to get there.  
 
-
 ```python
 ### 20
 plt.plot(np.array(sizes), variances, 'o', label="simulation") #this is a starting point, but you can change this!
 # Your theory.
-my_variance = [1/(2*x) for x in sizes]
+my_variance = [1/x for x in sizes]
 plt.plot(np.array(sizes), np.array(my_variance), 'x', label='theory')
 
 plt.xlabel("Population size") 
@@ -532,20 +523,12 @@ plt.ylabel("Variance")
 ```
 
 
-
-
-    Text(0,0.5,'Variance')
-
-
-
-
-![png](output_49_1.png)
+![png](image10.png)
 
 
 For short times, the expected changes in allele frequencies, $Var\left[E[(x-x_0)^2)\right]$, are larger for smaller population, a crucial result of population genetics. 
 
 The next question is: How does the rate of change in allele frequency depend on the initial allele frequency? We can plot the histograms of allele frequency as before:
-
 
 
 ```python
@@ -557,25 +540,16 @@ nGen = 1
 for p0 in p0_list:
     pops = [population(nInd, p0) for i in range(1000)] 
     [pop.evolve(nGen) for pop in pops]
-    sample = [pop.getTraj()[-1] for pop in pops]
+    sample = [pop.get_frequency_trajectory()[-1] for pop in pops]
     variances.append(np.var(sample))
     histograms.append(plt.hist(sample, 100, alpha=0.5, range=(0,1)))
 plt.xlabel("Population frequency")
 plt.ylabel("Number of populations")
 ```
 
+![png](image11.png)
 
-
-
-    Text(0,0.5,'Number of populations')
-
-
-
-
-![png](output_51_1.png)
-
-
-Find the relationship between initial frequency and variance. Again, this can be from the math exercise above, from looking it up, but you can also just try to guess it from the data--it's a simple function. 
+Find the relationship between initial frequency and variance. You can deduce it from the math exercise above, look it up on wikipedia, but you can also just try to guess it from the simulations.
 
 Tips for guessing: 
 
@@ -583,36 +557,36 @@ First, make the plot of variance vs frequency below
 
 Then consider how much variance there is for p0=0 and p0=1.  
 
-Can you come up with a simple function that has these values? Hint: it's simpler than a trigonometric function. 
-
-    Ans : Variance(p0) = p0 * (1-p0) / nInd
+Can you come up with a simple function that has these values? Hint: it's a very simple function! 
 
 
+Answer : 
 
+The relationship between initial frequency and variance is : Variance(p0) = p0 * (1-p0) / N
 
+Variance for p0 = 0 and po = 1 is zero from the above formula. Also it is apparent in the above graph.
+
+Can you come up with a simple function that has these values? Hint: it's a very simple function!
 ```python
 ### 22
+
 plt.plot(np.array(p0_list), variances, 'o', label="simulations")
-my_variance = [x*(1-x)/nInd for x in p0_list]
-plt.plot(np.array(p0_list), np.array(my_variance), '-', label="theory")  # Your theory.  
+plt.plot(np.array(p0_list), [x*(1-x)/nInd for x in p0_list], '-', label="theory")  # Your theory.  
 plt.ylabel("Variance")
 plt.xlabel(r"initial frequency p_0")
 plt.legend()
 ```
 
+![png](image12.png)
 
 
+Can you explain why this function is symmetrical around $p_0=0.5? 
 
-    <matplotlib.legend.Legend at 0x1f0ebca6e80>
-
-
-
-
-![png](output_53_1.png)
-
-
-Can you explain why this function is symmetrical around $p_0=0.5? p_0 specifies the initial allele frequency and in this model we can only have two kinds of alleles (0 and 1). There is no kind of bias towards any allele. Populations with initial p_0=x
-for allele 1 therefore would have same variance as populations with initial p_0=(1-x). Imagine switching 1's and 0's. Therefore, the above function is symmetrical around p_0=0.5
+Answer : 
+Algebraically, the function is symmetrical around $p_0=0.5 if f(p0) = f(1-p0).
+We saw that f(p0) = p0(1-p0)/N
+Let p0 be replaced by (1-p0):
+f(1-p0) = (1-p0)(1-1+p0)/N = (1-p0)p0/N = f(p0)
 
 ## Mutation
 New mutations enter the population in a single individual, and therefore begin their journey at frequency $\frac{1}{N}$. Numerically estimate the probability that such a new mutation will eventually fix (i.e., the probability that the mutation reaches frequency 1) in the population, if no subsequent mutations occur. 
@@ -626,7 +600,7 @@ New mutations enter the population in a single individual, and therefore begin t
 nInd = 10
 nGen = 100
 nRuns = 2000
-#enter the initial allele frequency for new mutations
+# Enter the initial allele frequency for new mutations
 p0 = 1/nInd
 pops = [population(nInd,p0) for i in range(nRuns)] 
 [pop.evolve(nGen) for pop in pops]; 
@@ -637,7 +611,7 @@ We can plot the number of populations at each frequency, as we did above.
 
 ```python
 ### 24
-nBins = nInd + 1  # We want to have bins for 0,1,2,...,N copies of the allele. 
+nBins = nInd + 1  # We want to have bins for 0,1,2,..., N copies of the allele. 
 proportion_fixed = []  # fixation rate
 for i in range(nGen+1):
     x,y = frequencyAtGen(i, pops, nBins);     
@@ -649,9 +623,9 @@ for i in range(nGen+1):
     else:
         plt.plot(x, y, color=plt.cm.autumn(i*1./nGen))
     
-    #we'll consider a population "fixed" if it is in the highest-frequency bin. It's
-    #an approximation, but not a bad one if the number of bins is comparable to the 
-    #population size.
+    # We'll consider a population "fixed" if it is in the highest-frequency bin. It's
+    # an approximation, but not a bad one if the number of bins is comparable to the 
+    # population size.
     proportion_fixed.append((i, y[-1]*1./nRuns))
     
 plt.legend()    
@@ -660,47 +634,36 @@ plt.ylabel("Number of simulations")
 ```
 
 
-
-
-    Text(0,0.5,'Number of simulations')
-
-
-
-
-![png](output_58_1.png)
+![png](image13.png)
 
 
 Here you should find that most mutations fix at zero frequency--only a small proportion survives. 
 
-*What is the probability that a new mutation fixes in the population?*--solve this problem both mathematically and numerically.  
+*What is the probability that a new mutation fixes in the population?--I'd like you to solve this problem both mathematically and numerically.?*.  
 
-The mathematical part requires almost no calculation or mathematical knowledge, once you think about it in the right way.  
+The mathematical part requires almost no calculation or mathematical knowledge, once you think about it in the right way. You can include your mathematical solution in the box below.  
 
-Your mathematical solution: probability that a new mutation fixes in the population = p0 = 1/nInd
+Answer :
+Let consider a haploid population of N individuals. If a mutation is introduced in a single individual its allele frequency is 1/N. 
+If we consider a single individual’s allele over very long period of time there can be only two possibilities: it either fixes in the population or becomes extinct. Since there is no selection the chance for any individual to produce a surviving lineage is equal. So the probability that the mutation fixes in the population is its allele frequency. That is 1/N
 
-For the computational part, note that we already computed the proportion of fixed alleles vs time in the "proportion_fixed" variable. Make sure that the numerical value agrees with the mathematical expectation.
-
+For the computational part, note that we already computed the proportion of fixed alleles vs time in the "proportion_fixed" variable. So if we simulate long enough, we'll find the proportion of mutations that eventually fix.
+Make sure that the numerical value agrees with the mathematical expectation!
 
 ```python
 ### 25
 proportion_fixed = np.array(proportion_fixed)
-
 fixation_probability = [p0]*(nGen+1)
-plt.plot(proportion_fixed[:,0], np.array(fixation_probability), 'x', label='theory')
+plt.plot(proportion_fixed[:,0], np.array(fixation_probability), '--', label='theory 1/N')
 plt.plot(proportion_fixed[:,0], proportion_fixed[:,1], '-', label="simulation")
 plt.xlabel("Generation")
 plt.ylabel("Fixation probability")
+plt.legend()
 ```
 
+![png](image14.png)
 
-
-
-    Text(0,0.5,'Fixation probability')
-
-
-
-
-![png](output_62_1.png)
+As we can see the fraction of population where mutation fixed converges to the predicted value.
 
 
 # Summary
@@ -716,7 +679,7 @@ Some important things that we've seen in this notebook:
 
 We'll get to selection, recombination, and linkage in the next exercises. In the meantime, you can think about the following:
 
-* Verify numerically that different reproductive models gives similar behavior. You may look up the Moran Model, or come up with your own evolutionary model. 
-* How much time will it take for a typical new mutation to reach fixation for different population sizes? 
+* How much time will it take for a typical new mutation to reach fixation for different population sizes?
 * If you add a constant influx of new mutations, how will the distribution of allele frequency look like at any given point in time?
 
+Copyright: Simon Gravel. Do not share of distribute this file without the written consent of the author.
