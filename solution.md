@@ -43,11 +43,8 @@ np.random.choice(initial_population, sample_size, replace=False )
 
 What is the distribution of the number of alternate alleles in a sample of s  individuals from a population of size nInd with allele frequency p?
 ```diff
-@@ Answer :  
-If we are sampling s individuals from a population we cannot choose the same person twice. Also the population size is fixed and it has a fixed number of individual with alternate allele. This is equivalent to “probability of k successes in s draws without replacement from a finite population of size nInd that contains p*nInd objects with that feature”. So this is a hypergeometric probability distribution.
-The probability that an s trail hypergeometric experiment results in exactly x alternate alleles, when the population size is nInd, (p*nInd) of which are classified as alternate alleles is:
-    
-    h(x; nInd, s, p*nInd) = [ C(p*nInd, x) * C(nInd(1-p), s-x) ] / [ C(nInd, s) ] @@
+@@ Answer :  If we are sampling s individuals from a population we cannot choose the same person twice. Also the population size is fixed and it has a fixed number of individual with alternate allele. This is equivalent to “probability of k successes in s draws without replacement from a finite population of size nInd that contains p*nInd objects with that feature”. So this is a hypergeometric probability distribution.
+The probability that an s trail hypergeometric experiment results in exactly x alternate alleles, when the population size is nInd, (p*nInd) of which are classified as alternate alleles is: h(x; nInd, s, p*nInd) = [ C(p*nInd, x) * C(nInd(1-p), s-x) ] / [ C(nInd, s) ] @@
 ```
 
 2. Convince yourself that this distribution is approximately Poisson distributed with mean one (hint: This is a consequence of the law of rare events)
@@ -117,8 +114,7 @@ generation(initial_population)
 Here again, we get a different number of ones every time we run the "generation" function. I also generated a bunch of generation samples to get an idea of how much variation there is, and overlaid some plausible distribution. Which one fits best? Does it make sense to you?
 
 ```diff
-@@ Answer :
-Binomial distribution and Poisson distributions fit quite well. And this is natural, because the sampling is now   done with replacement, meaning independent trials, which are the characteristics of Binomial and Poisson distributions.  Of these two Binomial fits the generated distribution the best. Hypergeometric distribution underfits our distribution   as trails are considered done without replacement in Hypergeometric distributions.@@
+@@ Answer :Binomial distribution and Poisson distributions fit quite well. And this is natural, because the sampling is now   done with replacement, meaning independent trials, which are the characteristics of Binomial and Poisson distributions.  Of these two Binomial fits the generated distribution the best. Hypergeometric distribution underfits our distribution   as trails are considered done without replacement in Hypergeometric distributions.@@
 ```
 
 
@@ -400,8 +396,7 @@ There are three important observations here:
     1-Frequencies tend to spread out over time 
     2-Over time, there are more and more populations at frequencies 0 and 1. (Why?) 
 ```diff
-@@ Answer : 
-We can observe a saturation taking place at 0 and 1 : some population reach extinction of the allele and it stays at 0 and, but if fixation is achieved it stays at 1. Even after further generations those populations remain in the same category. But other populations which were in between can reach these saturation in subsequent generations. @@
+@@ Answer: We can observe a saturation taking place at 0 and 1 : some population reach extinction of the allele and it stays at 0 and, but if fixation is achieved it stays at 1. Even after further generations those populations remain in the same category. But other populations which were in between can reach these saturation in subsequent generations. @@
 ```
 
     3-Apart from the 0 and 1 bins, the distribution becomes entirely flat.
@@ -471,9 +466,7 @@ Now let's dig into the effect of population size in a bit more detail. Consider 
 1. What is the expected distribution of allele frequencies after one generation, if they start at frequency $p$ in a population of size $N$? 
  
  ```diff
-@@ Answer :The expected distribution of allele frequencies after one generation is binomial. It is mathematically defined as follows:
-    
-    Frequency of alternate alleles after one generation, j = Binomial( $N$, $p$) = C(N,j) * p^j (1-p)^(N-j) @@
+@@ Answer :The expected distribution of allele frequencies after one generation is binomial. It is mathematically defined as follows: Frequency of alternate alleles after one generation, j = Binomial( $N$, $p$) = C(N,j) * p^j (1-p)^(N-j) @@
     ```
 
 2. What is the variance of this distribution? (Look it up if you don't know--wikipedia is useful for that kind of stuff)
@@ -514,12 +507,7 @@ plt.legend()
 So how does population size affect the change in allele frequency after one generation? Can you give a specific function describing the relationship between variance and population size?
 
 ```diff
-@@ Answer : The variance in allele frequency is decreasing with increase in population size.
-When population size decreases the distribution spreads out i.e variance increases. This is in accordance with the theory we developed above.
-    
-    Variance = 1/N
-        
-    This function is more and more accurate for large values of N. @@
+@@ Answer : The variance in allele frequency is decreasing with increase in population size. When population size decreases the distribution spreads out i.e variance increases. This is in accordance with the theory we developed above. Variance = 1/N. This function is more and more accurate for large values of N. @@
 ```
 
 You can get this relationship from the math exercise above, or just try to guess it from the data. If you want to try to guess, start by plotting the variances (stored in "variances") against the population sizes (stored in "sizes"). Then you can either try to plot different functinoal forms to see if they fit, or you can change the way you plot the data such that it looks like a straight line. If you do the latter, make sure you update the labels!
@@ -575,11 +563,7 @@ Then consider how much variance there is for p0=0 and p0=1.
 Can you come up with a simple function that has these values? Hint: it's a very simple function! 
 
 ```diff
-@@ Answer : 
-
-The relationship between initial frequency and variance is : Variance(p0) = p0 * (1-p0) / N
-
-Variance for p0 = 0 and po = 1 is zero from the above formula. Also it is apparent in the above graph. @@ 
+@@ Answer : The relationship between initial frequency and variance is : Variance(p0) = p0 * (1-p0) / N. Variance for p0 = 0 and po = 1 is zero from the above formula. Also it is apparent in the above graph. @@ 
 ```
 
 Can you come up with a simple function that has these values? Hint: it's a very simple function!
@@ -599,11 +583,7 @@ plt.legend()
 Can you explain why this function is symmetrical around $p_0=0.5? 
 
 ```diff
-@@ Answer : 
-Algebraically, the function is symmetrical around $p_0=0.5 if f(p0) = f(1-p0).
-We saw that f(p0) = p0(1-p0)/N
-Let p0 be replaced by (1-p0):
-f(1-p0) = (1-p0)(1-1+p0)/N = (1-p0)p0/N = f(p0) @@
+@@ Answer : Algebraically, the function is symmetrical around $p_0=0.5 if f(p0) = f(1-p0). We saw that f(p0) = p0(1-p0)/N. Let p0 be replaced by (1-p0): f(1-p0) = (1-p0)(1-1+p0)/N = (1-p0)p0/N = f(p0) @@
 ```
 
 ## Mutation
@@ -662,8 +642,7 @@ Here you should find that most mutations fix at zero frequency--only a small pro
 The mathematical part requires almost no calculation or mathematical knowledge, once you think about it in the right way. You can include your mathematical solution in the box below.  
 
 ```diff
-@@ Answer :
-Let consider a haploid population of N individuals. If a mutation is introduced in a single individual its allele frequency is 1/N. 
+@@ Answer : Let consider a haploid population of N individuals. If a mutation is introduced in a single individual its allele frequency is 1/N. 
 If we consider a single individual’s allele over very long period of time there can be only two possibilities: it either fixes in the population or becomes extinct. Since there is no selection the chance for any individual to produce a surviving lineage is equal. So the probability that the mutation fixes in the population is its allele frequency. That is 1/N @@
 ```
 
