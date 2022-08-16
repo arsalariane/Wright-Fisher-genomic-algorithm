@@ -321,8 +321,9 @@ plt.ylabel("population frequency of 1 allele")
 ```
 
 ![png](image4.PNG)
-
-We can see the drift in 10 independent populations over 30 generations starting with allele frequency 0.02 (which corresponds to p0)
+```diff
+@@We can see the drift in 10 independent populations over 30 generations starting with allele frequency 0.02 (which corresponds to p0)@@
+```
 
 Now that we know it works, let's explore this a bit numerically. Try to get at least 1000 runs, it'll make graphs prettier down the road.
 
@@ -390,7 +391,7 @@ plt.ylabel("Number of simulated populations ")
 ![png](image6.PNG)
 
 
-There are three important observations here:
+There are 2 important observations here:
 
     1-Frequencies tend to spread out over time 
     2-Over time, there are more and more populations at frequencies 0 and 1. (Why?) 
