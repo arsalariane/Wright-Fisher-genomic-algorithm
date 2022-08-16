@@ -43,8 +43,7 @@ np.random.choice(initial_population, sample_size, replace=False )
 
 What is the distribution of the number of alternate alleles in a sample of s  individuals from a population of size nInd with allele frequency p?
 ```diff
-@@ Answer :  If we are sampling s individuals from a population we cannot choose the same person twice. Also the population size is fixed and it has a fixed number of individual with alternate allele. This is equivalent to “probability of k successes in s draws without replacement from a finite population of size nInd that contains p*nInd objects with that feature”. So this is a hypergeometric probability distribution.
-The probability that an s trail hypergeometric experiment results in exactly x alternate alleles, when the population size is nInd, (p*nInd) of which are classified as alternate alleles is: h(x; nInd, s, p*nInd) = [ C(p*nInd, x) * C(nInd(1-p), s-x) ] / [ C(nInd, s) ] @@
+@@ Answer :  If we are sampling s individuals from a population we cannot choose the same person twice. Also the population size is fixed and it has a fixed number of individual with alternate allele. This is equivalent to “probability of k successes in s draws without replacement from a finite population of size nInd that contains p*nInd objects with that feature”. So this is a hypergeometric probability distribution. The probability that an s trail hypergeometric experiment results in exactly x alternate alleles, when the population size is nInd, (p*nInd) of which are classified as alternate alleles is: h(x; nInd, s, p*nInd) = [ C(p*nInd, x) * C(nInd(1-p), s-x) ] / [ C(nInd, s) ] @@
 ```
 
 2. Convince yourself that this distribution is approximately Poisson distributed with mean one (hint: This is a consequence of the law of rare events)
