@@ -152,7 +152,7 @@ plt.legend()
 
 ![png](image2.PNG)
 
-```dif
+```diff
 @@ Here we see the distribution of number of alternate alleles in offsprings if they are allowed to choose a random parent. Since one parent can have multiple offsprings this is a sampling with replacement. So this is equivalent to independent 10000 Bernoulli trials. So this is a binomial distribution.@@
 ```
 
