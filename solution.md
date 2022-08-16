@@ -95,9 +95,9 @@ If we sample 10 individuals from the initial population repeatedly :
 #![png](image1.PNG)
 
 If we sample 50 individuals from the initial population repeatedly :
-![png](image1bis.png)
+![png](image1bis.PNG)
 
-It is clear from the simulation as shown above that the number of alternate alleles if we sample 50 individuals from the initial population repeatedly the number of individuals with alternate allele follows hypergeometric distribution.
+@@ It is clear from the simulation as shown above that the number of alternate alleles if we sample 50 individuals from the initial population repeatedly the number of individuals with alternate allele follows hypergeometric distribution.@@
 
 ```python
 ### 6
@@ -112,7 +112,8 @@ generation(initial_population)
 
 Here again, we get a different number of ones every time we run the "generation" function. I also generated a bunch of generation samples to get an idea of how much variation there is, and overlaid some plausible distribution. Which one fits best? Does it make sense to you?
 
-Ans : Binomial distribution and Poisson distributions fit quite well. And this is natural, because the sampling is now   done with replacement, meaning independent trials, which are the characteristics of Binomial and Poisson distributions.  Of these two Binomial fits the generated distribution the best. Hypergeometric distribution underfits our distribution   as trails are considered done without replacement in Hypergeometric distributions.
+@@ Answer :
+Binomial distribution and Poisson distributions fit quite well. And this is natural, because the sampling is now   done with replacement, meaning independent trials, which are the characteristics of Binomial and Poisson distributions.  Of these two Binomial fits the generated distribution the best. Hypergeometric distribution underfits our distribution   as trails are considered done without replacement in Hypergeometric distributions.@@
 
 
 ```python
@@ -148,7 +149,7 @@ plt.ylim(0, 1.2*max(hist[0]))
 plt.legend()
 ```
 
-![png](image2.png)
+![png](image2.PNG)
 
 Here we see the distribution of number of alternate alleles in offsprings if they are allowed to choose a random parent. Since one parent can have multiple offsprings this is a sampling with replacement. So this is equivalent to independent 10000 Bernoulli trials. So this is a binomial distribution.
 
@@ -177,7 +178,7 @@ plt.xlabel("generation")
 plt.ylabel("population frequency")
 ```
 
-![png](image3.png)
+![png](image3.PNG)
 
 As we can see above the allele has gone extinct after 32-33 generations in the particular simulation.
 
@@ -318,7 +319,7 @@ plt.xlabel("generation")
 plt.ylabel("population frequency of 1 allele") 
 ```
 
-![png](image.png)
+![png](image4.PNG)
 
 We can see the drift in 10 independent populations over 30 generations starting with allele frequency 0.02 (which corresponds to p0)
 
@@ -341,7 +342,7 @@ plt.ylabel("population frequency")
 
 ```
 
-![png](image5.png)
+![png](image5.PNG)
 
 So there is a lot of randomness in there, but if you run it multiple times you should see that there is some regularity in how fast the allele frequencies depart from the initial values.
 To investigate this, we will generate a histogram describing the distribution of allele frequencies at each generation.
@@ -385,7 +386,7 @@ plt.ylabel("Number of simulated populations ")
 ```
 
 
-![png](image6.png)
+![png](image6.PNG)
 
 
 There are three important observations here:
@@ -411,11 +412,11 @@ plt.xlabel("Population frequency (bin number)")
 plt.ylabel("Generation")
 plt.colorbar()
 ```
-for p = 0.02
-![png](image7.png)
+for p0 = 0.02
+![png](image7.PNG)
 
-for p = 0.3
-![png](image7bis.png)
+for p0 = 0.3
+![png](image7bis.PNG)
 
 As we can see all 2000 populations were in 3rd bin initially and spreads out in subsequent generations.
 
@@ -450,8 +451,9 @@ ax.set_zlabel("Counts")
 plt.show()
 ```
 
+For p0 =0.3
 
-![png](image8bis.png)
+![png](image8bis.PNG)
 
 
 Now let's dig into the effect of population size in a bit more detail. Consider the change in the frequency of alleles between parent and offspring.
@@ -460,18 +462,18 @@ Now let's dig into the effect of population size in a bit more detail. Consider 
 
 1. What is the expected distribution of allele frequencies after one generation, if they start at frequency $p$ in a population of size $N$? 
     
-Answer :The expected distribution of allele frequencies after one generation is binomial. It is mathematically defined as follows:
+@@ Answer :The expected distribution of allele frequencies after one generation is binomial. It is mathematically defined as follows:
     
-    Frequency of alternate alleles after one generation, j = Binomial( $N$, $p$) = C(N,j) * p^j (1-p)^(N-j)
+    Frequency of alternate alleles after one generation, j = Binomial( $N$, $p$) = C(N,j) * p^j (1-p)^(N-j) @@
     
 
 2. What is the variance of this distribution? (Look it up if you don't know--wikipedia is useful for that kind of stuff)
     
-Answer :  Variance = Np(1-p)
+@@ Answer :  Variance = Np(1-p) @@
 
 3. What is the variance in the distribution in the derived allele frequency (rather than the allele counts)?
 
-Answer :  Variance = p(1-p)/N
+@@ Answer :  Variance = p(1-p)/N @@
 
 To study the effect of population size on the rate of change in allele frequencies, plot the distribution of allele frequencies after nGen generation. Start with nGen=1 generation.
 
@@ -495,17 +497,17 @@ plt.ylabel("Number of populations")
 plt.legend()
 ```
 
-![png](image9.png)
+![png](image9.PNG)
 
 
 So how does population size affect the change in allele frequency after one generation? Can you give a specific function describing the relationship between variance and population size?
 
-Answer : The variance in allele frequency is decreasing with increase in population size.
+@@ Answer : The variance in allele frequency is decreasing with increase in population size.
 When population size decreases the distribution spreads out i.e variance increases. This is in accordance with the theory we developed above.
     
     Variance = 1/N
         
-    This function is more and more accurate for large values of N.
+    This function is more and more accurate for large values of N. @@
 
 You can get this relationship from the math exercise above, or just try to guess it from the data. If you want to try to guess, start by plotting the variances (stored in "variances") against the population sizes (stored in "sizes"). Then you can either try to plot different functinoal forms to see if they fit, or you can change the way you plot the data such that it looks like a straight line. If you do the latter, make sure you update the labels!
 
@@ -523,7 +525,7 @@ plt.ylabel("Variance")
 ```
 
 
-![png](image10.png)
+![png](image10.PNG)
 
 
 For short times, the expected changes in allele frequencies, $Var\left[E[(x-x_0)^2)\right]$, are larger for smaller population, a crucial result of population genetics. 
@@ -547,7 +549,7 @@ plt.xlabel("Population frequency")
 plt.ylabel("Number of populations")
 ```
 
-![png](image11.png)
+![png](image11.PNG)
 
 Find the relationship between initial frequency and variance. You can deduce it from the math exercise above, look it up on wikipedia, but you can also just try to guess it from the simulations.
 
@@ -560,11 +562,11 @@ Then consider how much variance there is for p0=0 and p0=1.
 Can you come up with a simple function that has these values? Hint: it's a very simple function! 
 
 
-Answer : 
+@@ Answer : 
 
 The relationship between initial frequency and variance is : Variance(p0) = p0 * (1-p0) / N
 
-Variance for p0 = 0 and po = 1 is zero from the above formula. Also it is apparent in the above graph.
+Variance for p0 = 0 and po = 1 is zero from the above formula. Also it is apparent in the above graph. @@ 
 
 Can you come up with a simple function that has these values? Hint: it's a very simple function!
 ```python
@@ -577,16 +579,16 @@ plt.xlabel(r"initial frequency p_0")
 plt.legend()
 ```
 
-![png](image12.png)
+![png](image12.PNG)
 
 
 Can you explain why this function is symmetrical around $p_0=0.5? 
 
-Answer : 
+@@ Answer : 
 Algebraically, the function is symmetrical around $p_0=0.5 if f(p0) = f(1-p0).
 We saw that f(p0) = p0(1-p0)/N
 Let p0 be replaced by (1-p0):
-f(1-p0) = (1-p0)(1-1+p0)/N = (1-p0)p0/N = f(p0)
+f(1-p0) = (1-p0)(1-1+p0)/N = (1-p0)p0/N = f(p0) @@
 
 ## Mutation
 New mutations enter the population in a single individual, and therefore begin their journey at frequency $\frac{1}{N}$. Numerically estimate the probability that such a new mutation will eventually fix (i.e., the probability that the mutation reaches frequency 1) in the population, if no subsequent mutations occur. 
@@ -634,7 +636,7 @@ plt.ylabel("Number of simulations")
 ```
 
 
-![png](image13.png)
+![png](image13.PNG)
 
 
 Here you should find that most mutations fix at zero frequency--only a small proportion survives. 
@@ -643,9 +645,9 @@ Here you should find that most mutations fix at zero frequency--only a small pro
 
 The mathematical part requires almost no calculation or mathematical knowledge, once you think about it in the right way. You can include your mathematical solution in the box below.  
 
-Answer :
+@@ Answer :
 Let consider a haploid population of N individuals. If a mutation is introduced in a single individual its allele frequency is 1/N. 
-If we consider a single individual’s allele over very long period of time there can be only two possibilities: it either fixes in the population or becomes extinct. Since there is no selection the chance for any individual to produce a surviving lineage is equal. So the probability that the mutation fixes in the population is its allele frequency. That is 1/N
+If we consider a single individual’s allele over very long period of time there can be only two possibilities: it either fixes in the population or becomes extinct. Since there is no selection the chance for any individual to produce a surviving lineage is equal. So the probability that the mutation fixes in the population is its allele frequency. That is 1/N @@
 
 For the computational part, note that we already computed the proportion of fixed alleles vs time in the "proportion_fixed" variable. So if we simulate long enough, we'll find the proportion of mutations that eventually fix.
 Make sure that the numerical value agrees with the mathematical expectation!
@@ -661,7 +663,7 @@ plt.ylabel("Fixation probability")
 plt.legend()
 ```
 
-![png](image14.png)
+![png](image14.PNG)
 
 As we can see the fraction of population where mutation fixed converges to the predicted value.
 
