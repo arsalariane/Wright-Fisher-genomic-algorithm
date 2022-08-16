@@ -40,7 +40,7 @@ np.random.choice(initial_population, sample_size, replace=False )
 ```
 
 *Optional Mathematical exercise*
-```
+
 What is the distribution of the number of alternate alleles in a sample of s  individuals from a population of size nInd with allele frequency p?
 ```diff
 @@ Answer :  
@@ -51,7 +51,7 @@ The probability that an s trail hypergeometric experiment results in exactly x a
     ```
 
 2. Convince yourself that this distribution is approximately Poisson distributed with mean one (hint: This is a consequence of the law of rare events)
-```
+
 
 ```python
 ### 5
