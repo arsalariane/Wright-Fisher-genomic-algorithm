@@ -152,7 +152,9 @@ plt.legend()
 
 ![png](image2.PNG)
 
-Here we see the distribution of number of alternate alleles in offsprings if they are allowed to choose a random parent. Since one parent can have multiple offsprings this is a sampling with replacement. So this is equivalent to independent 10000 Bernoulli trials. So this is a binomial distribution.
+```dif
+@@ Here we see the distribution of number of alternate alleles in offsprings if they are allowed to choose a random parent. Since one parent can have multiple offsprings this is a sampling with replacement. So this is equivalent to independent 10000 Bernoulli trials. So this is a binomial distribution.@@
+```
 
 Now we are ready to evolve our population for 100 generations. Let's store the entire genotypes for each generation in a list.
 
@@ -181,7 +183,9 @@ plt.ylabel("population frequency")
 
 ![png](image3.PNG)
 
-As we can see above the allele has gone extinct after 32-33 generations in the particular simulation.
+```diff
+@@ As we can see above the allele has gone extinct after 32-33 generations in the particular simulation.@@
+```
 
 Now we would like to experiment a bit with the tools that we have developed. Before we do this, we will organize them a bit better, using a Python "class" and object-oriented programming. We have defined above variables that describe a population (such as the population size nInd, and the ancestral frequency g0). We have also defined functions that apply to a population, such as "generation". A class is used to keep track of the relation between objects, variables, and functions.
 
@@ -321,6 +325,7 @@ plt.ylabel("population frequency of 1 allele")
 ```
 
 ![png](image4.PNG)
+
 ```diff
 @@We can see the drift in 10 independent populations over 30 generations starting with allele frequency 0.02 (which corresponds to p0)@@
 ```
@@ -391,7 +396,7 @@ plt.ylabel("Number of simulated populations ")
 ![png](image6.PNG)
 
 
-There are 2 important observations here:
+There are three important observations here:
 
     1-Frequencies tend to spread out over time 
     2-Over time, there are more and more populations at frequencies 0 and 1. (Why?) 
@@ -421,7 +426,9 @@ for p0 = 0.02
 for p0 = 0.3
 ![png](image7bis.PNG)
 
-As we can see all 2000 populations were in 3rd bin initially and spreads out in subsequent generations.
+```diff
+@@ As we can see all 2000 populations were in 3rd bin initially and spreads out in subsequent generations.@@
+``` 
 
 Then a 3D histogram, unfortunately a bit slow to compute. 
 
@@ -465,9 +472,9 @@ Now let's dig into the effect of population size in a bit more detail. Consider 
 
 1. What is the expected distribution of allele frequencies after one generation, if they start at frequency $p$ in a population of size $N$? 
  
- ```diff
+```diff
 @@ Answer :The expected distribution of allele frequencies after one generation is binomial. It is mathematically defined as follows: Frequency of alternate alleles after one generation, j = Binomial( $N$, $p$) = C(N,j) * p^j (1-p)^(N-j) @@
-    ```
+```
 
 2. What is the variance of this distribution? (Look it up if you don't know--wikipedia is useful for that kind of stuff)
 
@@ -476,6 +483,7 @@ Now let's dig into the effect of population size in a bit more detail. Consider 
 ```
 
 3. What is the variance in the distribution in the derived allele frequency (rather than the allele counts)?
+
 ```diff
 @@ Answer :  Variance = p(1-p)/N @@
 ```
