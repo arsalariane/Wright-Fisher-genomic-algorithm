@@ -650,8 +650,7 @@ Here you should find that most mutations fix at zero frequency--only a small pro
 The mathematical part requires almost no calculation or mathematical knowledge, once you think about it in the right way. You can include your mathematical solution in the box below.  
 
 ```diff
-@@ Answer : Let consider a haploid population of N individuals. If a mutation is introduced in a single individual its allele frequency is 1/N. 
-If we consider a single individual’s allele over very long period of time there can be only two possibilities: it either fixes in the population or becomes extinct. Since there is no selection the chance for any individual to produce a surviving lineage is equal. So the probability that the mutation fixes in the population is its allele frequency. That is 1/N @@
+@@ Answer : Let consider a haploid population of N individuals. If a mutation is introduced in a single individual its allele frequency is 1/N. If we consider a single individual’s allele over very long period of time there can be only two possibilities: it either fixes in the population or becomes extinct. Since there is no selection the chance for any individual to produce a surviving lineage is equal. So the probability that the mutation fixes in the population is its allele frequency. That is 1/N @@
 ```
 
 For the computational part, note that we already computed the proportion of fixed alleles vs time in the "proportion_fixed" variable. So if we simulate long enough, we'll find the proportion of mutations that eventually fix.
@@ -670,7 +669,9 @@ plt.legend()
 
 ![png](image14.PNG)
 
-As we can see the fraction of population where mutation fixed converges to the predicted value.
+```diff
+@@ As we can see the fraction of population where mutation fixed converges to the predicted value.@@
+```
 
 
 # Summary
